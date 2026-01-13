@@ -17,7 +17,12 @@ function logRouteError(label, err, req) {
   try {
     console.error(`${label}:`, err && err.message ? err.message : err);
     if (err && err.stack) console.error(err.stack);
-    if (req) console.error("Request:", { method: req.method, path: req.originalUrl, query: req.query });
+    if (req)
+      console.error("Request:", {
+        method: req.method,
+        path: req.originalUrl,
+        query: req.query,
+      });
   } catch (e) {
     console.error("Failed to log error:", e);
   }
@@ -135,7 +140,7 @@ router.get(
         },
       });
     } catch (error) {
-  logRouteError("Get products error", error, req);
+      logRouteError("Get products error", error, req);
       res.status(500).json({
         status: "error",
         message: "Server error",
@@ -164,7 +169,7 @@ router.get("/featured/list", async (req, res) => {
       data: { products },
     });
   } catch (error) {
-  logRouteError("Get featured products error", error, req);
+    logRouteError("Get featured products error", error, req);
     res.status(500).json({
       status: "error",
       message: "Server error",
@@ -207,7 +212,7 @@ router.get("/:id", async (req, res) => {
       data: { product },
     });
   } catch (error) {
-  logRouteError("Get product error", error, req);
+    logRouteError("Get product error", error, req);
     res.status(500).json({
       status: "error",
       message: "Server error",
@@ -311,7 +316,7 @@ router.post(
         data: { product },
       });
     } catch (error) {
-  logRouteError("Create product error", error, req);
+      logRouteError("Create product error", error, req);
       res.status(500).json({
         status: "error",
         message: "Server error",
@@ -427,7 +432,7 @@ router.put(
         data: { product },
       });
     } catch (error) {
-  logRouteError("Update product error", error, req);
+      logRouteError("Update product error", error, req);
       res.status(500).json({
         status: "error",
         message: "Server error",
@@ -455,7 +460,7 @@ router.delete("/:id", [auth, admin], async (req, res) => {
       message: "Product deleted successfully",
     });
   } catch (error) {
-  logRouteError("Delete product error", error, req);
+    logRouteError("Delete product error", error, req);
     res.status(500).json({
       status: "error",
       message: "Server error",
@@ -537,7 +542,7 @@ router.post(
         },
       });
     } catch (error) {
-  logRouteError("Add review error", error, req);
+      logRouteError("Add review error", error, req);
       res.status(500).json({
         status: "error",
         message: "Server error",

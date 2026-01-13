@@ -14,7 +14,12 @@ function logRouteError(label, err, req) {
   try {
     console.error(`${label}:`, err && err.message ? err.message : err);
     if (err && err.stack) console.error(err.stack);
-    if (req) console.error("Request:", { method: req.method, path: req.originalUrl, query: req.query });
+    if (req)
+      console.error("Request:", {
+        method: req.method,
+        path: req.originalUrl,
+        query: req.query,
+      });
   } catch (e) {
     console.error("Failed to log error:", e);
   }
@@ -68,7 +73,7 @@ router.get(
         data: { categories },
       });
     } catch (error) {
-  logRouteError("Get categories error", error, req);
+      logRouteError("Get categories error", error, req);
       try {
         // Soft fallback to keep UI functional; returns empty list
         console.warn("Returning empty categories due to error");
@@ -124,7 +129,7 @@ router.get("/tree", async (req, res) => {
       data: { categories: categoryTree },
     });
   } catch (error) {
-  logRouteError("Get category tree error", error, req);
+    logRouteError("Get category tree error", error, req);
     res.status(500).json({
       status: "error",
       message: "Server error",
@@ -164,7 +169,7 @@ router.get("/:id", async (req, res) => {
       },
     });
   } catch (error) {
-  logRouteError("Get category error", error, req);
+    logRouteError("Get category error", error, req);
     res.status(500).json({
       status: "error",
       message: "Server error",
@@ -290,7 +295,7 @@ router.post(
         data: { category },
       });
     } catch (error) {
-  logRouteError("Create category error", error, req);
+      logRouteError("Create category error", error, req);
       res.status(500).json({
         status: "error",
         message: error?.message || "Server error",
@@ -439,7 +444,7 @@ router.put(
         data: { category: updatedCategory },
       });
     } catch (error) {
-  logRouteError("Update category error", error, req);
+      logRouteError("Update category error", error, req);
       res.status(500).json({
         status: "error",
         message: error?.message || "Server error",
@@ -498,7 +503,7 @@ router.delete("/:id", [auth, admin], async (req, res) => {
       message: "Category deleted successfully",
     });
   } catch (error) {
-  logRouteError("Delete category error", error, req);
+    logRouteError("Delete category error", error, req);
     res.status(500).json({
       status: "error",
       message: "Server error",
@@ -541,7 +546,7 @@ router.get("/with-counts", async (req, res) => {
 
     return res.json({ status: "success", data: { categories } });
   } catch (error) {
-  logRouteError("Get categories with counts error", error, req);
+    logRouteError("Get categories with counts error", error, req);
     // Fallback: return active categories without counts to avoid UI-breaking 500s
     try {
       const list = await Category.find({ isActive: true })
@@ -550,7 +555,7 @@ router.get("/with-counts", async (req, res) => {
       const categories = list.map((c) => ({ ...c, productCount: 0 }));
       return res.json({ status: "success", data: { categories } });
     } catch (fallbackErr) {
-  logRouteError("Categories fallback failed", fallbackErr, req);
+      logRouteError("Categories fallback failed", fallbackErr, req);
       return res.status(500).json({ status: "error", message: "Server error" });
     }
   }
