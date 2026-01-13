@@ -23,15 +23,15 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "caftan.png",
+        url: "/caftan.png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "caftan.png",
+        url: "/caftan.png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "caftan.png",
+        url: "/caftan.png",
         type: "image/svg+xml",
       },
     ],
