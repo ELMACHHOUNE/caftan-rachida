@@ -28,6 +28,10 @@ const orderRoutes = require("./routes/orders");
 const settingsRoutes = require("./routes/settings");
 const contactRoutes = require("./routes/contact");
 
+// Models used for debug/status endpoints
+const Category = require("./models/Category");
+const Product = require("./models/Product");
+
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
 
@@ -140,6 +144,49 @@ app.get("/health", (req, res) => {
     message: "Server is running! (root path)",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Debug/status endpoint to inspect DB connection and collection counts.
+// Keep this endpoint safe for now (no secrets) — useful during deploy troubleshooting.
+app.get("/api/debug/status", async (req, res) => {
+  try {
+    const dbState = mongoose.connection?.readyState;
+    const dbStatus =
+      dbState === 1
+        ? "connected"
+        : dbState === 2
+        ? "connecting"
+        : dbState === 0
+        ? "disconnected"
+        : "disconnecting";
+
+    const hasMongoUri = !!process.env.MONGODB_URI;
+
+    let categoryCount = null;
+    let productCount = null;
+    let sampleCategory = null;
+    let sampleProduct = null;
+
+    try {
+      categoryCount = await Category.countDocuments();
+      productCount = await Product.countDocuments();
+      sampleCategory = await Category.findOne().lean();
+      sampleProduct = await Product.findOne().lean();
+    } catch (e) {
+      // ignore - counts may fail if DB not connected
+    }
+
+    res.json({
+      status: "success",
+      db: { status: dbStatus, hasMongoUri },
+      counts: { categories: categoryCount, products: productCount },
+      samples: { category: sampleCategory, product: sampleProduct },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("Debug status error:", err);
+    res.status(500).json({ status: "error", message: "Debug status failed" });
+  }
 });
 
 // Root API index to avoid 404/500 when hitting base function path on Vercel
