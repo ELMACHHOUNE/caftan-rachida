@@ -21,14 +21,25 @@ router.get(
     query("includeInactive")
       .optional()
       .isBoolean()
-      .withMessage("includeInactive must be a boolean"),
+      .withMessage("includeInactive must be a boolean")
+      .toBoolean(),
   ],
   async (req, res) => {
     try {
+      // Log raw and parsed values so it's clear when the query param was omitted
+      // vs provided. After `.toBoolean()` the validator will convert "true"/"false"
+      // string values to actual booleans when present.
       console.log("GET /api/categories called", {
-        includeInactive: req.query.includeInactive,
+        raw: req.query.includeInactive,
+        parsed:
+          typeof req.query.includeInactive === "boolean"
+            ? req.query.includeInactive
+            : undefined,
       });
-      const includeInactive = req.query.includeInactive === "true";
+
+      // If the param was provided it's already a boolean (true/false). If it was
+      // omitted it will be undefined and we default to false (exclude inactive).
+      const includeInactive = !!req.query.includeInactive;
 
       // Build query
       let query = {};
