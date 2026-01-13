@@ -1,13 +1,28 @@
-// DEPRECATED: serverless wrapper removed.
-// This file previously wrapped the Express app for serverless deployments.
-// Keep a tiny fallback handler that returns a clear 410 response so that
-// accidental calls to the old function endpoint surface a helpful message.
+// Serverless wrapper for Vercel/Netlify-style function deployments.
+// Exports the Express app wrapped with serverless-http. Attempts a
+// non-fatal DB connection during module init so importing the function
+// doesn't crash if the DB env isn't set. Errors are logged for visibility.
+const serverless = require("serverless-http");
 
-module.exports = (req, res) => {
-  res.status(410).json({
-    status: "error",
-    message:
-      "Legacy serverless wrapper removed. Deploy the `server/` application separately and point your frontend to its base URL (set NEXT_PUBLIC_API_URL).",
-    docs: "https://your-repo/README.md#deployment",
-  });
-};
+// Import the Express app exported from server.js
+const app = require("../server");
+const { connectDB } = require("../lib/db");
+
+// Try to connect to the database, but don't throw on failure so the
+// function import won't crash. Errors are logged for visibility.
+(async () => {
+  try {
+    if (process.env.MONGODB_URI) {
+      await connectDB();
+      console.log("DB connection initialized in serverless wrapper");
+    } else {
+      console.warn(
+        "MONGODB_URI not set; skipping DB connection in serverless wrapper"
+      );
+    }
+  } catch (err) {
+    console.error("Non-fatal DB connect error in serverless wrapper:", err);
+  }
+})();
+
+module.exports = serverless(app);
