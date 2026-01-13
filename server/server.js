@@ -54,35 +54,49 @@ const errorHandler = require("./middleware/errorHandler");
 
 // Security middleware and rate limiting removed for serverless compatibility
 
-const allowedOriginsEnv =
-  process.env.ALLOWED_ORIGINS || "http://localhost:3000";
-const allowedOrigins = allowedOriginsEnv
-  .split(",")
+// CORS
+// ---------
+// Goals:
+// - Fix browser preflight failures (OPTIONS) by always responding with correct headers.
+// - Allow local dev + deployed client(s).
+// - Keep config simple for Vercel: set ALLOWED_ORIGINS to comma-separated list.
+//
+// Notes:
+// - If you block an Origin by throwing, the browser can show a confusing message
+//   about missing CORS headers. We handle it explicitly.
+// - Allowing "no Origin" is useful for server-to-server, curl, and health checks.
+
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
+
+// Defaults that cover common workflows:
+// - localhost dev
+// - Vercel preview deployments (same-site from *.vercel.app)
+// - optionally your production client domain via ALLOWED_ORIGINS
+const defaultAllowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
+
+const allowedOrigins = (
+  allowedOriginsEnv ? allowedOriginsEnv.split(",") : defaultAllowedOrigins
+)
   .map((s) => s.trim())
   .filter(Boolean);
-// CORS
-// Important: In browsers, CORS is enforced based on the *response headers*.
-// If we reject an origin by throwing an error, Express will return an error
-// response *without* CORS headers, and the browser will show:
-// "No 'Access-Control-Allow-Origin' header is present".
-//
-// To make debugging sane and ensure consistent behavior, we:
-// 1) Decide if the Origin is allowed.
-// 2) If allowed, always set CORS headers.
-// 3) For disallowed origins, respond 403 (still without ACAO, by design).
-const isOriginAllowed = (origin) => !origin || allowedOrigins.includes(origin);
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (isOriginAllowed(origin)) {
-    if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-  }
-  next();
-});
+const isVercelPreviewOrigin = (origin) =>
+  typeof origin === "string" && /^https?:\/\/.*\.vercel\.app$/i.test(origin);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  // Allow Vercel preview/production frontends if you didn't set ALLOWED_ORIGINS.
+  if (!allowedOriginsEnv && isVercelPreviewOrigin(origin)) return true;
+  return false;
+};
 
 // Handle preflight requests early for all routes.
+// Express 5 + path-to-regexp doesn't allow '*' patterns here, so we do it
+// as a simple middleware instead.
 app.use((req, res, next) => {
   if (req.method !== "OPTIONS") return next();
 
@@ -104,12 +118,12 @@ app.use((req, res, next) => {
   return res.sendStatus(204);
 });
 
-// Keep the cors() middleware for normal requests as well.
+// Use cors() to set headers on normal requests.
 app.use(
   cors({
     origin: (origin, callback) => {
       if (isOriginAllowed(origin)) return callback(null, true);
-      return callback(null, false);
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })

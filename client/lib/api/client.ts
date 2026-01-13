@@ -1,5 +1,12 @@
 // API configuration and base client
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+// In Next.js, env values are injected as strings. If the value in `.env` is
+// written with quotes (e.g. NEXT_PUBLIC_API_URL="https://..."), the resulting
+// string can include the quote characters depending on tooling.
+// That leads to invalid URLs like: '"https://caftan-server.vercel.app"/api/...'
+// which can manifest as 404s or failed fetches.
+const RAW_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000')
+  .trim()
+  .replace(/^['"]|['"]$/g, '')
 
 // Ensure base URL ends with '/api' and has no trailing slash duplication
 const withApiSuffix = (url: string): string => {
