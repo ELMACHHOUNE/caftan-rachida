@@ -8,6 +8,23 @@ require("dotenv").config();
 
 const app = express();
 
+// Ensure DB connection is attempted when the module is loaded (helps serverless
+// environments where `require.main === module` is false). connectDB is idempotent
+// and will no-op if already connected.
+(async () => {
+  try {
+    if (process.env.MONGODB_URI) {
+      await connectDB();
+    } else {
+      console.warn(
+        "MONGODB_URI not present at module init; DB connect skipped"
+      );
+    }
+  } catch (err) {
+    console.error("Non-fatal DB connect error at module init:", err);
+  }
+})();
+
 // Basic env validation to surface misconfiguration early
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 const missingEnv = requiredEnv.filter((k) => !process.env[k]);
