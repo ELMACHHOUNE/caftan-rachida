@@ -1,47 +1,17 @@
-export const dynamic = 'force-dynamic'
-import Link from "next/link"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { getCategoriesWithCounts } from "@/lib/api/categories"
+export const dynamic = "force-dynamic";
+import Link from "next/link";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { getCategoriesWithCounts } from "@/lib/api/categories";
 
 export default async function CategoriesPage() {
-  let categories: Awaited<ReturnType<typeof getCategoriesWithCounts>> = []
+  let categories: Awaited<ReturnType<typeof getCategoriesWithCounts>> = [];
   try {
-    categories = await getCategoriesWithCounts()
+    categories = await getCategoriesWithCounts();
   } catch (e) {
-    categories = []
-  }
-
-  // Fallback: show key types if API returns no categories
-  if (!categories || categories.length === 0) {
-    categories = [
-      {
-        _id: 'fallback:caftan',
-        name: 'Caftan',
-        slug: 'caftan',
-        description: 'Traditional caftan collection',
-        image: { url: '/placeholder.svg' },
-        isActive: true,
-        sortOrder: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        productCount: 0,
-      } as any,
-      {
-        _id: 'fallback:dresses',
-        name: 'Dresses',
-        slug: 'dresses',
-        description: 'Elegant dresses collection',
-        image: { url: '/placeholder.svg' },
-        isActive: true,
-        sortOrder: 2,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        productCount: 0,
-      } as any,
-    ]
+    categories = [];
   }
 
   return (
@@ -52,7 +22,9 @@ export default async function CategoriesPage() {
         {/* Hero Section */}
         <section className="py-20 bg-linear-to-br from-primary via-secondary to-accent text-primary-foreground">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <h1 className="text-5xl md:text-6xl font-bold text-balance">Browse Categories</h1>
+            <h1 className="text-5xl md:text-6xl font-bold text-balance">
+              Browse Categories
+            </h1>
             <p className="text-xl leading-relaxed opacity-90">
               Explore our curated collections of authentic Moroccan caftans
             </p>
@@ -76,17 +48,31 @@ export default async function CategoriesPage() {
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-primary/80 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-primary-foreground">
-                      <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
+                      <h3 className="text-2xl font-bold mb-2">
+                        {category.name}
+                      </h3>
                       {category.description && (
-                        <p className="text-sm opacity-90">{category.description}</p>
+                        <p className="text-sm opacity-90">
+                          {category.description}
+                        </p>
                       )}
-                      {typeof category.productCount === 'number' && (
-                        <p className="text-xs opacity-80 mt-1">{category.productCount} products</p>
+                      {typeof category.productCount === "number" && (
+                        <p className="text-xs opacity-80 mt-1">
+                          {category.productCount} products
+                        </p>
                       )}
                     </div>
                   </div>
                   <CardContent className="p-6">
-                    <Link href={category._id.startsWith('fallback:') ? `/products?search=${encodeURIComponent(category.name)}` : `/products?category=${category._id}`}>
+                    <Link
+                      href={
+                        category._id.startsWith("fallback:")
+                          ? `/products?search=${encodeURIComponent(
+                              category.name
+                            )}`
+                          : `/products?category=${category._id}`
+                      }
+                    >
                       <Button className="w-full">Explore Collection</Button>
                     </Link>
                   </CardContent>
@@ -116,5 +102,5 @@ export default async function CategoriesPage() {
 
       <Footer />
     </div>
-  )
+  );
 }

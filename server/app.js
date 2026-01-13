@@ -11,8 +11,11 @@ const app = express();
 // Body parsing
 app.use(express.json());
 
-// CORS allowlist
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
+const allowedOrigins = allowedOriginsEnv
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use(
   cors({
     origin: (origin, callback) => {

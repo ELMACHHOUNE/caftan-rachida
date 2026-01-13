@@ -217,42 +217,7 @@ if (require.main === module) {
   (async () => {
     try {
       await connectDB();
-      // Ensure default categories exist (Caftan, Dresses)
-      try {
-        const Category = require("./models/Category");
-        const defaults = [
-          {
-            name: "Caftan",
-            description: "Traditional caftan collection",
-            isActive: true,
-            sortOrder: 1,
-          },
-          {
-            name: "Dresses",
-            description: "Elegant dresses collection",
-            isActive: true,
-            sortOrder: 2,
-          },
-        ];
-        for (const def of defaults) {
-          try {
-            const existing = await Category.findOne({
-              name: new RegExp(`^${def.name}$`, "i"),
-            });
-            if (!existing) {
-              // use constructor + save for clearer stack traces in some mongoose versions
-              const c = new Category(def);
-              await c.save();
-              console.log(`Seeded category: ${def.name}`);
-            }
-          } catch (itemErr) {
-            // Log full error for debugging but continue seeding other defaults
-            console.warn(`Failed to seed category ${def.name}:`, itemErr);
-          }
-        }
-      } catch (seedErr) {
-        console.warn("Category seeding skipped or failed:", seedErr);
-      }
+      // Default category auto-seeding removed. Categories must be created via the API or admin UI.
 
       const PORT = process.env.PORT || 5000;
       const server = app.listen(PORT, "0.0.0.0", () => {

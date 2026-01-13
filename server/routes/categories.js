@@ -9,33 +9,8 @@ const path = require("path");
 
 const router = express.Router();
 
-// Ensure default categories exist when none are present (useful on serverless deploys)
-async function ensureDefaultCategories() {
-  const count = await Category.countDocuments();
-  if (count > 0) return;
-  const defaults = [
-    {
-      name: "Caftan",
-      description: "Traditional caftan collection",
-      isActive: true,
-      sortOrder: 1,
-    },
-    {
-      name: "Dresses",
-      description: "Elegant dresses collection",
-      isActive: true,
-      sortOrder: 2,
-    },
-  ];
-  for (const def of defaults) {
-    const existing = await Category.findOne({
-      name: new RegExp(`^${def.name}$`, "i"),
-    });
-    if (!existing) {
-      await Category.create(def);
-    }
-  }
-}
+// Note: automatic seeding of default categories was removed. Create categories
+// via the API or admin UI when needed.
 
 // @desc    Get all categories
 // @route   GET /api/categories
@@ -53,10 +28,6 @@ router.get(
       console.log("GET /api/categories called", {
         includeInactive: req.query.includeInactive,
       });
-      // Seed defaults if empty
-      try {
-        await ensureDefaultCategories();
-      } catch (_) {}
       const includeInactive = req.query.includeInactive === "true";
 
       // Build query
@@ -518,9 +489,7 @@ router.delete("/:id", [auth, admin], async (req, res) => {
 // @access  Public
 router.get("/with-counts", async (req, res) => {
   try {
-    try {
-      await ensureDefaultCategories();
-    } catch (_) {}
+    // Defaults seeding removed; no-op
     const categories = await Category.aggregate([
       { $match: { isActive: true } },
       {
