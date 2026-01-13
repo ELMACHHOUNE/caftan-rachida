@@ -57,7 +57,8 @@ export default function RootLayout({
             <CartSidebar />
           </CartProvider>
         </AuthProvider>
-        <Analytics />
+        {/* Only enable Vercel Analytics in production to avoid dev console noise */}
+        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
   );
