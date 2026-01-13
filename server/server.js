@@ -11,19 +11,16 @@ const app = express();
 // Ensure DB connection is attempted when the module is loaded (helps serverless
 // environments where `require.main === module` is false). connectDB is idempotent
 // and will no-op if already connected.
-(async () => {
-  try {
-    if (process.env.MONGODB_URI) {
-      await connectDB();
-    } else {
-      console.warn(
-        "MONGODB_URI not present at module init; DB connect skipped"
-      );
-    }
-  } catch (err) {
+// In serverless, never block module init on DB connection.
+// Cold starts + slow Mongo can otherwise hit Vercel's function timeout.
+// We kick off a best-effort connection attempt in the background.
+if (process.env.MONGODB_URI) {
+  connectDB().catch((err) => {
     console.error("Non-fatal DB connect error at module init:", err);
-  }
-})();
+  });
+} else {
+  console.warn("MONGODB_URI not present at module init; DB connect skipped");
+}
 
 // Basic env validation to surface misconfiguration early
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
