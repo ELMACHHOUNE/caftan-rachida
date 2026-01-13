@@ -8,10 +8,12 @@ import { getCategoriesWithCounts } from "@/lib/api/categories";
 
 export default async function CategoriesPage() {
   let categories: Awaited<ReturnType<typeof getCategoriesWithCounts>> = [];
+  let apiError: string | null = null;
   try {
     categories = await getCategoriesWithCounts();
   } catch (e) {
     categories = [];
+    apiError = "Categories are temporarily unavailable.";
   }
 
   return (
@@ -34,6 +36,11 @@ export default async function CategoriesPage() {
         {/* Categories Grid */}
         <section className="py-20 bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {apiError && (
+              <div className="mb-8 rounded-lg border border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+                {apiError}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {categories.map((category) => (
                 <Card

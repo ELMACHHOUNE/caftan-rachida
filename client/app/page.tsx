@@ -9,10 +9,12 @@ import { formatCurrency, normalizeImageUrl } from "@/lib/utils";
 
 export default async function HomePage() {
   let featured: Product[] = [];
+  let apiError: string | null = null;
   try {
     featured = await getFeaturedProducts(8);
   } catch (_) {
     featured = [];
+    apiError = "Featured products are temporarily unavailable.";
   }
 
   const features = [
@@ -114,6 +116,11 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {apiError && (
+                <div className="col-span-full rounded-lg border border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+                  {apiError}
+                </div>
+              )}
               {featured.map((product) => (
                 <Link key={product._id} href={`/products/${product._id}`}>
                   <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-border hover:border-accent">

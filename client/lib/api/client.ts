@@ -127,14 +127,24 @@ class ApiClient {
 
       return await response.json()
     } catch (error) {
-      console.error('API request failed:', error)
-      console.error('Request details:', { endpoint, config })
-      // JSON.stringify(Error) is usually `{}`; keep it for completeness but include .message too.
+      const err: any = error
+      const name = err?.name
+      // Node/undici uses AbortError with message "This operation was aborted"
+      const isAbort = name === 'AbortError'
+
+      console.error('API request failed:', isAbort ? 'Timeout/AbortError' : err)
+      console.error('Request details:', { baseURL: this.baseURL, endpoint, config })
       console.error('Full error:', {
-        message: (error as any)?.message,
-        name: (error as any)?.name,
-        stack: (error as any)?.stack,
+        name,
+        message: err?.message,
+        stack: err?.stack,
       })
+
+      // Normalize timeouts into a friendly error without noisy DOMException fields.
+      if (isAbort) {
+        throw new Error(`Request timed out after ${timeoutMs}ms`)
+      }
+
       throw error
     } finally {
       clearTimeout(timeout)
