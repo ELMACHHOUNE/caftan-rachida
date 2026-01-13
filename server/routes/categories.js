@@ -25,12 +25,6 @@ function logRouteError(label, err, req) {
   }
 }
 
-// Note: automatic seeding of default categories was removed. Create categories
-// via the API or admin UI when needed.
-
-// @desc    Get all categories
-// @route   GET /api/categories
-// @access  Public
 router.get(
   "/",
   [
@@ -74,15 +68,7 @@ router.get(
       });
     } catch (error) {
       logRouteError("Get categories error", error, req);
-      try {
-        // Soft fallback to keep UI functional; returns empty list
-        console.warn("Returning empty categories due to error");
-        return res.json({ status: "success", data: { categories: [] } });
-      } catch (_) {
-        return res
-          .status(500)
-          .json({ status: "error", message: "Server error" });
-      }
+      return res.status(500).json({ status: "error", message: "Server error" });
     }
   }
 );
