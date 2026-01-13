@@ -13,8 +13,12 @@ const { connectDB } = require("../lib/db");
 (async () => {
   try {
     if (process.env.MONGODB_URI) {
-      await connectDB();
-      console.log("DB connection initialized in serverless wrapper");
+      // Never block the Vercel function on DB connect during cold starts.
+      // If Mongo is slow/unreachable, awaiting here can trigger a 504 timeout.
+      connectDB().catch((err) => {
+        console.error("Non-fatal DB connect error in serverless wrapper:", err);
+      });
+      console.log("DB connection attempt started in serverless wrapper");
     } else {
       console.warn(
         "MONGODB_URI not set; skipping DB connection in serverless wrapper"

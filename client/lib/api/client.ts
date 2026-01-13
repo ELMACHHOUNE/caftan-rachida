@@ -90,8 +90,17 @@ class ApiClient {
       },
     }
 
+    // In Next.js Server Components, fetch() runs on the server and can hang for a long time
+    // when the upstream is down. Add a reasonable timeout to avoid 30s+ SSR renders.
+    const controller = new AbortController()
+    const timeoutMs = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 7000)
+    const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, config)
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        ...config,
+        signal: controller.signal,
+      })
       
       if (!response.ok) {
         let errorData: any = null
@@ -127,6 +136,8 @@ class ApiClient {
         stack: (error as any)?.stack,
       })
       throw error
+    } finally {
+      clearTimeout(timeout)
     }
   }
 
