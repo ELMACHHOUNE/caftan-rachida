@@ -1,4 +1,3 @@
-// Minimal Vercel serverless wrapper for the Express app.
 // This file attempts a non-fatal DB connection during module init so
 // importing the function doesn't crash if the DB env isn't set.
 const serverless = require("serverless-http");

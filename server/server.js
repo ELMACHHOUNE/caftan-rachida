@@ -33,9 +33,6 @@ const errorHandler = require("./middleware/errorHandler");
 
 // Security middleware and rate limiting removed for serverless compatibility
 
-// CORS: restrict to known frontends (read from env so deployments can configure origins)
-// Set ALLOWED_ORIGINS as a comma-separated list, e.g.
-// ALLOWED_ORIGINS=http://localhost:3000,https://caftan-rachida.vercel.app
 const allowedOriginsEnv =
   process.env.ALLOWED_ORIGINS || "http://localhost:3000";
 const allowedOrigins = allowedOriginsEnv
