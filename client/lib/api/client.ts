@@ -1,13 +1,17 @@
 // API configuration and base client
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+// IMPORTANT: Treat NEXT_PUBLIC_API_URL as the *API root*.
+// Examples:
+// - Local dev:  http://localhost:5000/api
+// - Vercel:     https://caftan-server.vercel.app/api
+//
+// We do NOT auto-append `/api` anymore because it can create double-prefix bugs
+// when the env var already contains `/api`.
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
-// Ensure base URL ends with '/api' and has no trailing slash duplication
-const withApiSuffix = (url: string): string => {
-  const trimmed = url.replace(/\/+$/, '')
-  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`
-}
+// Normalize any trailing slashes so callers can safely use endpoints like `/products`.
+const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '')
 
-const API_BASE_URL = withApiSuffix(RAW_BASE_URL)
+const API_BASE_URL = normalizeBaseUrl(RAW_BASE_URL)
 
 // Types
 export interface ApiResponse<T = any> {
@@ -116,7 +120,12 @@ class ApiClient {
     } catch (error) {
       console.error('API request failed:', error)
       console.error('Request details:', { endpoint, config })
-      console.error('Full error:', JSON.stringify(error, null, 2))
+      // JSON.stringify(Error) is usually `{}`; keep it for completeness but include .message too.
+      console.error('Full error:', {
+        message: (error as any)?.message,
+        name: (error as any)?.name,
+        stack: (error as any)?.stack,
+      })
       throw error
     }
   }

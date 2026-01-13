@@ -54,8 +54,12 @@ const errorHandler = require("./middleware/errorHandler");
 
 // Security middleware and rate limiting removed for serverless compatibility
 
+// Comma-separated list of allowed browser origins.
+// Include localhost for dev and the deployed frontend domain for prod.
+// You can override via ALLOWED_ORIGINS in Vercel.
 const allowedOriginsEnv =
-  process.env.ALLOWED_ORIGINS || "http://localhost:3000";
+  process.env.ALLOWED_ORIGINS ||
+  "http://localhost:3000,https://caftan-client.vercel.app";
 const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
