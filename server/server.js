@@ -60,32 +60,60 @@ const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+// CORS
+// Important: In browsers, CORS is enforced based on the *response headers*.
+// If we reject an origin by throwing an error, Express will return an error
+// response *without* CORS headers, and the browser will show:
+// "No 'Access-Control-Allow-Origin' header is present".
+//
+// To make debugging sane and ensure consistent behavior, we:
+// 1) Decide if the Origin is allowed.
+// 2) If allowed, always set CORS headers.
+// 3) For disallowed origins, respond 403 (still without ACAO, by design).
+const isOriginAllowed = (origin) => !origin || allowedOrigins.includes(origin);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (isOriginAllowed(origin)) {
+    if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  next();
+});
+
+// Handle preflight requests early for all routes.
+app.use((req, res, next) => {
+  if (req.method !== "OPTIONS") return next();
+
+  const origin = req.headers.origin;
+  if (!isOriginAllowed(origin)) return res.sendStatus(403);
+
+  if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    req.headers["access-control-request-headers"] ||
+      "Content-Type, Authorization"
+  );
+  return res.sendStatus(204);
+});
+
+// Keep the cors() middleware for normal requests as well.
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
+      if (isOriginAllowed(origin)) return callback(null, true);
+      return callback(null, false);
     },
     credentials: true,
   })
 );
-// Preflight handler without wildcard path (Express 5)
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    const origin = req.headers.origin;
-    if (!origin || allowedOrigins.includes(origin)) {
-      if (origin) res.header("Access-Control-Allow-Origin", origin);
-      res.header("Access-Control-Allow-Credentials", "true");
-      res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE");
-      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-      return res.sendStatus(204);
-    }
-    return res.sendStatus(403);
-  }
-  next();
-});
 
 // Body parser middleware
 app.use(express.json({ limit: "10mb" }));
