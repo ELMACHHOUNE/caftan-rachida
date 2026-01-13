@@ -99,6 +99,26 @@ app.use(
 
 // Routes
 // Support both '/api/*' for local/server use and '/*' for Vercel serverless mounted at /api
+// Redirect helper: if someone visits '/products' (or other top-level api routes)
+// without the '/api' prefix, forward them to the canonical '/api' path.
+// This helps deployments where the function root differs from local expectations
+// and keeps a single canonical set of handlers under '/api/*'.
+app.use((req, res, next) => {
+  try {
+    // Only redirect GET requests for top-level resources
+    if (req.method === "GET") {
+      const m = req.path.match(/^\/(auth|users|products|categories|orders|settings|contact|uploads)(\/.*)?$/);
+      if (m && !req.path.startsWith("/api/")) {
+        return res.redirect(302, `/api${req.path}`);
+      }
+    }
+  } catch (e) {
+    // Ignore redirect errors and continue to normal routing
+    console.error("Redirect middleware error:", e);
+  }
+  next();
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
