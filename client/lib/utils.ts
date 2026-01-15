@@ -15,14 +15,17 @@ export function formatCurrency(amount: number, currency = 'MAD', locale = 'en-US
 
 /**
  * Normalize image URL returned from the API.
- * If the URL is relative (starts with /uploads), prefix it with NEXT_PUBLIC_API_URL or fallback to http://localhost:5000
+ * If the URL is relative (starts with /uploads), prefix it with the server *origin*.
+ * Note: NEXT_PUBLIC_API_URL usually points to the API root (e.g. https://domain.com/api),
+ * but uploads are served from https://domain.com/uploads (no /api).
  */
 export function normalizeImageUrl(url?: string | null) {
   if (!url) return url
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   if (url.startsWith('/uploads')) {
-    const base = (process.env.NEXT_PUBLIC_API_URL as string) || 'http://localhost:5000'
-    return `${base}${url}`
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL as string) || 'http://localhost:5000/api'
+    const origin = apiBase.replace(/\/+$/, '').replace(/\/api$/, '')
+    return `${origin}${url}`
   }
   return url
 }

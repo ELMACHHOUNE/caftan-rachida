@@ -403,7 +403,7 @@ router.put(
           const base = `${req.protocol}://${req.get("host")}`;
           updateData.images = [
             {
-              url: `${base}/uploads/${filename}`,
+              url: `${base}/api/uploads/${filename}`,
               public_id: null,
               alt: req.body.imageAlt || updateData.name,
             },
