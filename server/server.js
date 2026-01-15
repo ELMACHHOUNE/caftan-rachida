@@ -56,7 +56,7 @@ const errorHandler = require("./middleware/errorHandler");
 // You can override via ALLOWED_ORIGINS in Vercel.
 const allowedOriginsEnv =
   process.env.ALLOWED_ORIGINS ||
-  "http://localhost:3000,https://caftan-client.vercel.app";
+  "http://localhost:3000";
 const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
