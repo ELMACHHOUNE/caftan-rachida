@@ -11,7 +11,10 @@ const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 // Normalize any trailing slashes so callers can safely use endpoints like `/products`.
 const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '')
 
-const API_BASE_URL = normalizeBaseUrl(RAW_BASE_URL)
+// Remove /api suffix if present (for backward compatibility)
+const removeApiSuffix = (url: string): string => url.replace(/\/api\/?$/i, '')
+
+const API_BASE_URL = removeApiSuffix(normalizeBaseUrl(RAW_BASE_URL))
 
 // Types
 export interface ApiResponse<T = any> {
