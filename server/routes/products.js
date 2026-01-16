@@ -291,6 +291,26 @@ router.post(
         }
 
         if (filename) {
+          // Persist a copy to GridFS so it survives serverless cold starts
+          try {
+            const { saveToGridFS } = require("../lib/storage");
+            const filePath =
+              req.file.path && fs.existsSync(req.file.path)
+                ? req.file.path
+                : null;
+            await saveToGridFS(filename, {
+              filePath,
+              buffer: !filePath ? req.file.buffer : undefined,
+              contentType: req.file.mimetype,
+              metadata: { model: "Product", field: "images" },
+            });
+          } catch (gridErr) {
+            console.warn(
+              "GridFS persist failed (continuing with URL):",
+              gridErr?.message || gridErr
+            );
+          }
+
           const base = `${req.protocol}://${req.get("host")}`;
           body.images = [
             {

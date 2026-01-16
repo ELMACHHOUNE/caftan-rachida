@@ -121,9 +121,31 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Serve uploaded files statically under /api/uploads and /uploads
-// Use the same path used by multer storage to avoid mismatches
+// Serve uploaded files under /api/uploads and /uploads
+// First try GridFS (persistent), then fall back to filesystem
 const uploadsPath = uploadsDir;
+const {
+  openGridFSDownloadStream,
+  detectContentType,
+} = require("./lib/storage");
+
+// GridFS streaming handler must come BEFORE express.static
+app.get("/api/uploads/:filename", async (req, res, next) => {
+  try {
+    const { filename } = req.params;
+    const stream = openGridFSDownloadStream(filename);
+    if (!stream) return next();
+
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Content-Type", detectContentType(filename));
+
+    stream.on("error", () => next());
+    return stream.pipe(res);
+  } catch (e) {
+    return next();
+  }
+});
 
 app.use(
   "/api/uploads",
