@@ -24,11 +24,18 @@ async function connectDB() {
       throw new Error("MONGODB_URI is not set");
     }
 
-    await mongoose.connect(process.env.MONGODB_URI, {
+    // Add timeout to prevent hanging on slow database connections
+    const timeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database connection timeout')), DEFAULT_TIMEOUT_MS)
+    })
+
+    const connectPromise = mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: DEFAULT_TIMEOUT_MS,
       socketTimeoutMS: DEFAULT_TIMEOUT_MS,
       connectTimeoutMS: DEFAULT_TIMEOUT_MS,
-    });
+    })
+
+    await Promise.race([connectPromise, timeout])
     console.log("MongoDB connected");
   } catch (err) {
     console.error("MongoDB connection error:", err);

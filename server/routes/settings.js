@@ -7,10 +7,18 @@ const router = express.Router()
 
 // Helper to get or create settings singleton
 async function getOrCreateSettings() {
-  let doc = await Settings.findOne()
+  // Add timeout to prevent hanging on slow database queries
+  const timeout = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Database query timeout')), 5000)
+  })
+  
+  const query = Settings.findOne()
+  const doc = await Promise.race([query, timeout])
+  
   if (!doc) {
-    doc = new Settings({})
-    await doc.save()
+    const newDoc = new Settings({})
+    await newDoc.save()
+    return newDoc
   }
   return doc
 }
