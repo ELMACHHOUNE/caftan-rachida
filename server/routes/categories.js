@@ -230,6 +230,19 @@ router.post(
       }
 
       const body = req.body;
+      // Some clients submit an image URL instead of multipart file upload.
+      // Accept either `image` (string URL) or `categoryImage` (legacy) and map
+      // it into the schema shape { url, alt }.
+      const imageUrlFromBody =
+        (typeof body.image === "string" && body.image.trim()) ||
+        (typeof body.categoryImage === "string" && body.categoryImage.trim());
+      if (imageUrlFromBody) {
+        body.image = {
+          url: imageUrlFromBody,
+          public_id: null,
+          alt: body.name,
+        };
+      }
       // If a file was uploaded, save its public URL path for clients to fetch
       if (req.file) {
         let filename = req.file.filename;
@@ -386,6 +399,20 @@ router.put(
 
       // Update category
       const updateData = { ...req.body };
+
+      // Accept image URL updates when the client doesn't upload a file.
+      const imageUrlFromBody =
+        (typeof updateData.image === "string" && updateData.image.trim()) ||
+        (typeof updateData.categoryImage === "string" &&
+          updateData.categoryImage.trim());
+      if (imageUrlFromBody) {
+        updateData.image = {
+          url: imageUrlFromBody,
+          public_id: null,
+          alt: updateData.name || category.name,
+        };
+      }
+
       if (req.file) {
         let filename = req.file.filename;
         if (!filename && req.file.buffer) {
