@@ -114,16 +114,18 @@ router.get(
         sort[sortBy] = sortOrder;
       }
 
-      // Get products
-      const products = await Product.find(query)
-        .populate("category", "name slug")
-        .populate("createdBy", "name")
-        .sort(sort)
-        .skip(skip)
-        .limit(limit);
-
-      // Get total count
-      const totalProducts = await Product.countDocuments(query);
+      // Get products + total count in parallel.
+      // Using .lean() is a big win on serverless (skips Mongoose document hydration).
+      const [products, totalProducts] = await Promise.all([
+        Product.find(query)
+          .populate("category", "name slug")
+          .populate("createdBy", "name")
+          .sort(sort)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Product.countDocuments(query),
+      ]);
       const totalPages = Math.ceil(totalProducts / limit);
 
       res.json({
@@ -162,7 +164,8 @@ router.get("/featured/list", async (req, res) => {
     })
       .populate("category", "name slug")
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.json({
       status: "success",
@@ -191,7 +194,8 @@ router.get("/:id", async (req, res) => {
     const product = await Product.findById(req.params.id)
       .populate("category", "name slug description")
       .populate("createdBy", "name")
-      .populate("reviews.user", "name avatar");
+      .populate("reviews.user", "name avatar")
+      .lean();
 
     if (!product) {
       return res.status(404).json({

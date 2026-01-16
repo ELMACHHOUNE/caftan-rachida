@@ -92,8 +92,14 @@ class ApiClient {
 
     // In Next.js Server Components, fetch() runs on the server and can hang for a long time
     // when the upstream is down. Add a reasonable timeout to avoid 30s+ SSR renders.
+    //
+    // Default tuned for Vercel serverless cold starts.
+    // Override per request by passing { timeoutMs: number } inside options.
     const controller = new AbortController()
-    const timeoutMs = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 7000)
+    const requestedTimeout = (options as any)?.timeoutMs
+    const timeoutMs = Number(
+      requestedTimeout ?? process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? 15000
+    )
     const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
     try {
@@ -132,13 +138,19 @@ class ApiClient {
       // Node/undici uses AbortError with message "This operation was aborted"
       const isAbort = name === 'AbortError'
 
-      console.error('API request failed:', isAbort ? 'Timeout/AbortError' : err)
-      console.error('Request details:', { baseURL: this.baseURL, endpoint, config })
-      console.error('Full error:', {
-        name,
-        message: err?.message,
-        stack: err?.stack,
-      })
+      // Timeouts are an expected failure mode (especially during cold starts).
+      // Avoid spamming console.error; keep details at warn level.
+      if (isAbort) {
+        console.warn('API request timed out:', { baseURL: this.baseURL, endpoint, timeoutMs })
+      } else {
+        console.error('API request failed:', err)
+        console.error('Request details:', { baseURL: this.baseURL, endpoint, config })
+        console.error('Full error:', {
+          name,
+          message: err?.message,
+          stack: err?.stack,
+        })
+      }
 
       // Normalize timeouts into a friendly error without noisy DOMException fields.
       if (isAbort) {
