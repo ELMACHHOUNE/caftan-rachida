@@ -22,10 +22,18 @@ export function formatCurrency(amount: number, currency = 'MAD', locale = 'en-US
 export function normalizeImageUrl(url?: string | null) {
   if (!url) return url
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  if (url.startsWith('/uploads')) {
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL as string) || 'http://localhost:5000/api'
-    const origin = apiBase.replace(/\/+$/, '').replace(/\/api$/, '')
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL as string) || 'http://localhost:5000/api'
+  const apiRoot = apiBase.replace(/\/+$/, '')
+  const origin = apiRoot.replace(/\/api$/, '')
+
+  // If API returns a relative uploads path, make it absolute.
+  // In this project we prefer serving uploads under /api/uploads.
+  if (url.startsWith('/api/uploads')) {
     return `${origin}${url}`
+  }
+  if (url.startsWith('/uploads')) {
+    // Map legacy /uploads/* to /api/uploads/* (Vercel routes only /api/*).
+    return `${origin}/api${url}`
   }
   return url
 }

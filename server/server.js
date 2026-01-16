@@ -55,8 +55,7 @@ const errorHandler = require("./middleware/errorHandler");
 // Include localhost for dev and the deployed frontend domain for prod.
 // You can override via ALLOWED_ORIGINS in Vercel.
 const allowedOriginsEnv =
-  process.env.ALLOWED_ORIGINS ||
-  "http://localhost:3000";
+  process.env.ALLOWED_ORIGINS || "http://localhost:3000";
 const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
@@ -232,6 +231,27 @@ app.get("/api/debug/status", async (req, res) => {
   } catch (err) {
     console.error("Debug status error:", err);
     res.status(500).json({ status: "error", message: "Debug status failed" });
+  }
+});
+
+// Debug endpoint to inspect the uploads directory contents.
+// NOTE: On Vercel serverless, filesystem is ephemeral; files may disappear between invocations.
+app.get("/api/debug/uploads", (req, res) => {
+  try {
+    const fs = require("fs");
+    const files = fs.existsSync(uploadsPath) ? fs.readdirSync(uploadsPath) : [];
+    res.json({
+      status: "success",
+      data: {
+        uploadsPath,
+        fileCount: files.length,
+        files: files.slice(0, 50),
+      },
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to read uploads" });
   }
 });
 

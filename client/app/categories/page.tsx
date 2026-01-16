@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getCategoriesWithCounts } from "@/lib/api/categories";
+import { normalizeImageUrl } from "@/lib/utils";
 
 export default async function CategoriesPage() {
   let categories: Awaited<ReturnType<typeof getCategoriesWithCounts>> = [];
@@ -49,7 +50,10 @@ export default async function CategoriesPage() {
                 >
                   <div className="relative h-64 overflow-hidden bg-muted">
                     <img
-                      src={category.image?.url || "/placeholder.svg"}
+                      src={
+                        normalizeImageUrl(category.image?.url) ||
+                        "/placeholder.svg"
+                      }
                       alt={category.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
