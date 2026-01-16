@@ -265,7 +265,12 @@ router.post(
         }
 
         if (filename) {
-          const base = `${req.protocol}://${req.get("host")}`;
+          const forwardedProto = (
+            req.headers["x-forwarded-proto"] || req.protocol
+          )
+            .toString()
+            .split(",")[0];
+          const base = `${forwardedProto}://${req.get("host")}`;
           body.image = {
             url: `${base}/api/uploads/${filename}`,
             public_id: null,

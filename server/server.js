@@ -133,6 +133,11 @@ const {
 app.get("/api/uploads/:filename", async (req, res, next) => {
   try {
     const { filename } = req.params;
+    // If DB is not connected (cold start), immediately fall back to static/404
+    if (mongoose.connection?.readyState !== 1) {
+      return next();
+    }
+
     const stream = openGridFSDownloadStream(filename);
     if (!stream) return next();
 
@@ -140,7 +145,25 @@ app.get("/api/uploads/:filename", async (req, res, next) => {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.setHeader("Content-Type", detectContentType(filename));
 
-    stream.on("error", () => next());
+    let responded = false;
+    const failSafe = setTimeout(() => {
+      if (!responded) {
+        try {
+          stream.destroy();
+        } catch {}
+        next();
+      }
+    }, Number(process.env.UPLOADS_STREAM_TIMEOUT_MS || 2000));
+
+    stream.on("error", () => {
+      clearTimeout(failSafe);
+      next();
+    });
+    stream.on("close", () => {
+      clearTimeout(failSafe);
+      responded = true;
+    });
+
     return stream.pipe(res);
   } catch (e) {
     return next();
@@ -270,6 +293,43 @@ app.get("/api/debug/uploads", (req, res) => {
     res
       .status(500)
       .json({ status: "error", message: "Failed to read uploads" });
+  }
+});
+
+// Debug endpoint to check GridFS presence for a filename
+app.get("/api/debug/gridfs/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const state = mongoose.connection?.readyState;
+    let present = false;
+    let error = null;
+    try {
+      if (state === 1) {
+        const stream = openGridFSDownloadStream(filename);
+        if (stream) {
+          stream.on("file", () => {
+            present = true;
+          });
+          stream.on("error", () => {
+            present = false;
+          });
+          // Destroy immediately; we only probe
+          try {
+            stream.destroy();
+          } catch {}
+        }
+      }
+    } catch (e) {
+      error = e?.message || String(e);
+    }
+    res.json({
+      status: "success",
+      dbReadyState: state,
+      present,
+      error,
+    });
+  } catch (e) {
+    res.status(500).json({ status: "error", message: "GridFS debug failed" });
   }
 });
 
