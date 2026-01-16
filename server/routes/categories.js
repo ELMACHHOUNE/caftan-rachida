@@ -254,7 +254,7 @@ router.post(
         if (filename) {
           const base = `${req.protocol}://${req.get("host")}`;
           body.image = {
-            url: `${base}/uploads/${filename}`,
+            url: `${base}/api/uploads/${filename}`,
             public_id: null,
             alt: body.name,
           };

@@ -290,7 +290,7 @@ router.post(
           const base = `${req.protocol}://${req.get("host")}`;
           body.images = [
             {
-              url: `${base}/uploads/${filename}`,
+              url: `${base}/api/uploads/${filename}`,
               public_id: null,
               alt: req.body.imageAlt || body.name,
             },
