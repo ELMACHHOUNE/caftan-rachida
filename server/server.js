@@ -107,13 +107,26 @@ app.use((req, res, next) => {
 });
 
 // Keep the cors() middleware for normal requests as well.
+// Use a more robust CORS configuration for serverless environments
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if the origin is in the allowed list
       if (isOriginAllowed(origin)) return callback(null, true);
-      return callback(null, false);
+      
+      // Origin not allowed
+      return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'Content-Range'],
+    maxAge: 86400, // 24 hours
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 
