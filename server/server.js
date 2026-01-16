@@ -410,7 +410,7 @@ if (require.main === module) {
       // Default category auto-seeding removed. Categories must be created via the API or admin UI.
 
       const PORT = process.env.PORT || 5000;
-      const server = app.listen(PORT, "0.0.0.0", () => {
+      const server = app.listen(PORT, () => {
         console.log(
           `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
         );
