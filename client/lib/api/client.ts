@@ -1,12 +1,12 @@
 // API configuration and base client
 // IMPORTANT: Treat NEXT_PUBLIC_API_URL as the *API root*.
 // Examples:
-// - Local dev:  http://localhost:5000/api
-// - Vercel:     https://caftan-server.vercel.app/api
+// - Local dev:  http://localhost:5000
+// - Vercel:     https://caftan-rachida-api.vercel.app
 //
 // We do NOT auto-append `/api` anymore because it can create double-prefix bugs
 // when the env var already contains `/api`.
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 // Normalize any trailing slashes so callers can safely use endpoints like `/products`.
 const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '')
