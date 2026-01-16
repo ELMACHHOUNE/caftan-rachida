@@ -48,6 +48,8 @@ const Product = require("./models/Product");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
+// Ensure static uploads path matches multer storage
+const { uploadsDir } = require("./middleware/upload");
 
 // Security middleware and rate limiting removed for serverless compatibility
 
@@ -120,14 +122,8 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Serve uploaded files statically under /api/uploads and /uploads
-// Use a writable path in serverless (e.g., /tmp) to avoid ENOENT
-const isServerless =
-  !!process.env.VERCEL || process.env.SERVERLESS_ENV === "true";
-const uploadsPath = process.env.UPLOADS_DIR
-  ? path.resolve(process.env.UPLOADS_DIR)
-  : isServerless
-  ? path.join(os.tmpdir(), "uploads")
-  : path.join(__dirname, "uploads");
+// Use the same path used by multer storage to avoid mismatches
+const uploadsPath = uploadsDir;
 
 app.use(
   "/api/uploads",
