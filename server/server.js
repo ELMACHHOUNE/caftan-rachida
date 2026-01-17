@@ -56,8 +56,9 @@ const { uploadsDir } = require("./middleware/upload");
 // Comma-separated list of allowed browser origins.
 // Include localhost for dev and the deployed frontend domain for prod.
 // You can override via ALLOWED_ORIGINS in Vercel.
+// For production, allow all origins if not set (for testing purposes)
 const allowedOriginsEnv =
-  process.env.ALLOWED_ORIGINS || "http://localhost:3000,https://caftan-rachida.vercel.app";
+  process.env.ALLOWED_ORIGINS || (process.env.NODE_ENV === 'production' ? '*' : "http://localhost:3000,https://caftan-rachida.vercel.app");
 const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
@@ -72,12 +73,28 @@ const allowedOrigins = allowedOriginsEnv
 // 1) Decide if the Origin is allowed.
 // 2) If allowed, always set CORS headers.
 // 3) For disallowed origins, respond 403 (still without ACAO, by design).
-const isOriginAllowed = (origin) => !origin || allowedOrigins.includes(origin);
+const isOriginAllowed = (origin) => {
+  // Allow requests with no origin (like mobile apps or curl requests)
+  if (!origin) return true;
+  
+  // Allow all origins if wildcard is set
+  if (allowedOrigins.includes('*')) return true;
+  
+  // Check if the origin is in the allowed list
+  return allowedOrigins.includes(origin);
+};
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (isOriginAllowed(origin)) {
-    if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+    if (origin) {
+      // If wildcard is set, use wildcard instead of the specific origin
+      if (allowedOrigins.includes('*')) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+      } else {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+      }
+    }
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Credentials", "true");
   }
@@ -91,7 +108,14 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (!isOriginAllowed(origin)) return res.sendStatus(403);
 
-  if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+  if (origin) {
+    // If wildcard is set, use wildcard instead of the specific origin
+    if (allowedOrigins.includes('*')) {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+    } else {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+  }
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
@@ -113,6 +137,9 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
+      
+      // Allow all origins if wildcard is set
+      if (allowedOrigins.includes('*')) return callback(null, true);
       
       // Check if the origin is in the allowed list
       if (isOriginAllowed(origin)) return callback(null, true);
