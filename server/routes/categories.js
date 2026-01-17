@@ -272,7 +272,7 @@ router.post(
             .split(",")[0];
           const base = `${forwardedProto}://${req.get("host")}`;
           body.image = {
-            url: `${base}/api/uploads/${filename}`,
+            url: `${base}/uploads/${filename}`,
             public_id: null,
             alt: body.name,
           };
@@ -441,7 +441,7 @@ router.put(
         if (filename) {
           const base = `${req.protocol}://${req.get("host")}`;
           updateData.image = {
-            url: `${base}/api/uploads/${filename}`,
+            url: `${base}/uploads/${filename}`,
             public_id: null,
             alt: updateData.name,
           };
