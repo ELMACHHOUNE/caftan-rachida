@@ -27,13 +27,14 @@ export function normalizeImageUrl(url?: string | null) {
   const origin = apiRoot.replace(/\/api$/, '')
 
   // If API returns a relative uploads path, make it absolute.
-  // In this project we prefer serving uploads under /api/uploads.
+  // Uploads are served from /uploads (without /api/ prefix).
   if (url.startsWith('/api/uploads')) {
-    return `${origin}${url}`
+    // Remove /api prefix from the URL
+    return `${origin}${url.replace('/api', '')}`
   }
   if (url.startsWith('/uploads')) {
-    // Map legacy /uploads/* to /api/uploads/* (Vercel routes only /api/*).
-    return `${origin}/api${url}`
+    // Directly use /uploads path (without /api/ prefix)
+    return `${origin}${url}`
   }
   return url
 }
